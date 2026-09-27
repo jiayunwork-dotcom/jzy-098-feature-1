@@ -601,3 +601,309 @@ code, pre, .state-label, .edge-label {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===========================================================================
+   答案对拍
+   =========================================================================== */
+
+.app-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.app-tab {
+  border: none;
+  background: none;
+  padding: 13px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+.app-tab:hover {
+  color: var(--primary);
+}
+.app-tab-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.cmp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 40px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+.cmp-subhead {
+  margin: 18px 0 8px;
+  font-size: 15px;
+}
+
+/* 双输入 */
+.cmp-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.cmp-input-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.cmp-input-error {
+  border-color: var(--reject);
+  box-shadow: 0 0 0 3px rgba(224, 49, 49, 0.15);
+  background: #fff8f8;
+}
+.cmp-input-label {
+  font-size: 12.5px;
+}
+.cmp-error-box {
+  margin-top: 12px;
+}
+.cmp-error-pos {
+  margin-top: 4px;
+  font-weight: 600;
+}
+.cmp-run-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.cmp-alphabet {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.cmp-alpha-chip {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-size: 12.5px;
+}
+
+.verdict-left {
+  background: #e7f5ff;
+  border: 1px solid #74c0fc;
+  color: #0b4f85;
+}
+.verdict-right {
+  background: #fff4e6;
+  border: 1px solid #ffa94d;
+  color: #8a4008;
+}
+
+/* 反例卡片 */
+.cmp-witness-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+.cmp-witness-card {
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid;
+}
+.cmp-witness-left {
+  background: #f1f9ff;
+  border-color: #a5d8ff;
+}
+.cmp-witness-right {
+  background: #fff8f2;
+  border-color: #ffc078;
+}
+.cmp-witness-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.cmp-witness-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cmp-witness-code {
+  font-family: Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+.cmp-no-witness {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.cmp-dead-mark {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 组合图图例 */
+.cmp-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.cmp-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.cmp-legend-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-radius: 50%;
+}
+.cmp-legend-ring {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px dashed #1971c2;
+  border-radius: 50%;
+}
+
+/* 反例回放 */
+.cmp-replay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 14px 0;
+}
+.side-replay {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: #fcfdfe;
+  overflow-x: auto;
+}
+.side-replay-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.side-replay-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.side-replay-regex {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.side-replay-machines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+.side-replay-machines .stage-card {
+  box-shadow: none;
+  padding: 12px;
+}
+.side-replay-machines .stage-head h2 {
+  font-size: 13px;
+}
+.side-replay-machines .stage-subtitle {
+  font-size: 11.5px;
+  margin-bottom: 6px;
+}
+
+.cmp-machines-note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.cmp-machine-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+.cmp-machine-summary h4 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+.cmp-transition-list {
+  max-height: 220px;
+  overflow: auto;
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  font-family: Consolas, monospace;
+}
+
+/* 批量 */
+.cmp-batch-inputs {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: 14px;
+  margin-top: 10px;
+}
+.cmp-batch-ref,
+.cmp-batch-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cmp-batch-table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.cmp-batch-table {
+  width: 100%;
+}
+.cmp-row-error {
+  background: #fff8f8;
+}
+.cmp-row-error td {
+  border-bottom-color: #ffdede;
+}
+.cmp-cell-error {
+  color: #a61e1e;
+  font-size: 12.5px;
+}
+.cmp-cell-error em {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
+@media (max-width: 1080px) {
+  .cmp-input-grid,
+  .cmp-witness-grid,
+  .cmp-replay-grid,
+  .cmp-machine-list,
+  .cmp-batch-inputs {
+    grid-template-columns: 1fr;
+  }
+}

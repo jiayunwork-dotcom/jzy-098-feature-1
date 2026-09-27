@@ -241,4 +241,104 @@ export interface SimulateResult {
 export interface ApiError {
   error: string;
   position?: number;
+  /** 单条对拍出错时，出错的是哪一边（批量接口同样用 left 表示标准答案） */
+  side?: 'left' | 'right';
+}
+
+// ---------------------------------------------------------------------------
+// 答案对拍：两条正则的语言关系判定 + 乘积自动机逐步演示
+// ---------------------------------------------------------------------------
+
+/** 四种语言关系：等价 / 左真包含于右 / 右真包含于左 / 互不包含 */
+export type CompareRelation = 'equal' | 'left_subset' | 'right_subset' | 'incomparable';
+
+/**
+ * 乘积状态的接受性类别：
+ *   both      两边都接受
+ *   leftOnly  只有左边接受（左 \\ 右 方向的反例落在此类）
+ *   rightOnly 只有右边接受（右 \\ 左 方向的反例落在此类）
+ *   neither   两边都不接受
+ */
+export type ProductCategory = 'both' | 'leftOnly' | 'rightOnly' | 'neither';
+
+/** 对拍一侧使用的完整 DFA：字母表已扩成并集，死状态显式补出并参与计算 */
+export interface CompareMachine {
+  states: number[];
+  start: number;
+  accepting: number[];
+  transitions: DfaTransition[];
+  alphabet: Symbol[];
+  /** 显式死状态编号（补全 + 最小化后至多一个） */
+  deadState: number;
+}
+
+export interface ProductState {
+  id: number;
+  left: number;
+  right: number;
+  category: ProductCategory;
+  /** 到达该乘积状态的"最短且最靠前"串（反例即目标类别状态的 witness） */
+  witness: string;
+}
+
+export type CompareStepKind = 'init' | 'process' | 'finish';
+
+export interface CompareStep {
+  index: number;
+  kind: CompareStepKind;
+  title: string;
+  description: string;
+  /** 当前正在展开的乘积状态（高亮焦点） */
+  currentState: number | null;
+  /** 本步正在读取的并集字母表符号 */
+  symbol: Symbol | null;
+  /** 本步新发现的乘积状态（若有） */
+  newState: number | null;
+  /** 本步读取符号后到达的乘积状态 */
+  targetState: number | null;
+  /** 截至本步已发现的全部乘积状态 */
+  states: ProductState[];
+  /** 截至本步已经存在的乘积转移 */
+  transitions: DfaTransition[];
+  /** 待处理（尚未展开）的乘积状态队列 */
+  frontier: number[];
+}
+
+export interface CompareResult {
+  leftRegex: string;
+  rightRegex: string;
+  relation: CompareRelation;
+  alphabet: Symbol[];
+  leftMachine: CompareMachine;
+  rightMachine: CompareMachine;
+  product: {
+    start: number;
+    states: ProductState[];
+    transitions: DfaTransition[];
+  };
+  steps: CompareStep[];
+  /**
+   * 左 \\ 右方向反例（左边接受、右边拒绝）：
+   *   string 形式 null 表示该方向差集为空（没有反例）；
+   *   空串 "" 本身就是合法反例，与 null 严格区分。
+   */
+  leftOnlyWitness: string | null;
+  /** 右 \\ 左方向反例（右边接受、左边拒绝），null 同样表示该方向无反例 */
+  rightOnlyWitness: string | null;
+}
+
+/** 批量对拍中一条学生答案的判定结果（语法错误时只有 index/error/position/side） */
+export interface CompareBatchItem {
+  index: number;
+  relation?: CompareRelation;
+  leftOnlyWitness?: string | null;
+  rightOnlyWitness?: string | null;
+  error?: string;
+  position?: number;
+  side?: 'left' | 'right';
+}
+
+export interface CompareBatchResult {
+  leftRegex: string;
+  results: CompareBatchItem[];
 }

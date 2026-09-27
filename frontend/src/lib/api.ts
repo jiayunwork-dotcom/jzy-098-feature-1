@@ -2,6 +2,8 @@
 
 import type {
   ApiErrorDTO,
+  CompareBatchResultDTO,
+  CompareResultDTO,
   ConstructResultDTO,
   ExampleRegexDTO,
   SimulateResultDTO,
@@ -16,8 +18,14 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   const payload = await res.json();
   if (!res.ok) {
     const err = payload as ApiErrorDTO;
-    const error = new Error(err.error || `请求失败（${res.status}）`);
-    (error as Error & { position?: number }).position = err.position;
+    const error = new Error(err.error || `请求失败（${res.status}）`) as Error & {
+      position?: number;
+      side?: 'left' | 'right';
+      status?: number;
+    };
+    error.position = err.position;
+    error.side = err.side;
+    error.status = res.status;
     throw error;
   }
   return payload as T;
@@ -33,4 +41,12 @@ export function constructRegex(regex: string): Promise<ConstructResultDTO> {
 
 export function simulateRegex(regex: string, input: string): Promise<SimulateResultDTO> {
   return postJson<SimulateResultDTO>('/api/simulate', { regex, input });
+}
+
+export function compareRegexesApi(left: string, right: string): Promise<CompareResultDTO> {
+  return postJson<CompareResultDTO>('/api/compare', { left, right });
+}
+
+export function compareBatchApi(left: string, answers: string[]): Promise<CompareBatchResultDTO> {
+  return postJson<CompareBatchResultDTO>('/api/compare-batch', { left, answers });
 }

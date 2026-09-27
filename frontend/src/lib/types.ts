@@ -152,4 +152,76 @@ export interface ExampleRegexDTO {
 export interface ApiErrorDTO {
   error: string;
   position?: number;
+  side?: 'left' | 'right';
+}
+
+// ---------------------------------------------------------------------------
+// 答案对拍
+// ---------------------------------------------------------------------------
+
+export type CompareRelationDTO = 'equal' | 'left_subset' | 'right_subset' | 'incomparable';
+
+export type ProductCategoryDTO = 'both' | 'leftOnly' | 'rightOnly' | 'neither';
+
+export interface CompareMachineDTO {
+  states: number[];
+  start: number;
+  accepting: number[];
+  transitions: DfaTransitionDTO[];
+  alphabet: Symbol[];
+  deadState: number;
+}
+
+export interface ProductStateDTO {
+  id: number;
+  left: number;
+  right: number;
+  category: ProductCategoryDTO;
+  witness: string;
+}
+
+export interface CompareStepDTO {
+  index: number;
+  kind: 'init' | 'process' | 'finish';
+  title: string;
+  description: string;
+  currentState: number | null;
+  symbol: Symbol | null;
+  newState: number | null;
+  targetState: number | null;
+  states: ProductStateDTO[];
+  transitions: DfaTransitionDTO[];
+  frontier: number[];
+}
+
+export interface CompareResultDTO {
+  leftRegex: string;
+  rightRegex: string;
+  relation: CompareRelationDTO;
+  alphabet: Symbol[];
+  leftMachine: CompareMachineDTO;
+  rightMachine: CompareMachineDTO;
+  product: {
+    start: number;
+    states: ProductStateDTO[];
+    transitions: DfaTransitionDTO[];
+  };
+  steps: CompareStepDTO[];
+  leftOnlyWitness: string | null;
+  rightOnlyWitness: string | null;
+}
+
+export interface CompareBatchItemDTO {
+  index: number;
+  relation?: CompareRelationDTO;
+  leftOnlyWitness?: string | null;
+  rightOnlyWitness?: string | null;
+  error?: string;
+  position?: number;
+  side?: 'left' | 'right';
+}
+
+export interface CompareBatchResultDTO {
+  leftRegex: string;
+  results: CompareBatchItemDTO[];
 }
