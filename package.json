@@ -1,0 +1,20 @@
+{
+  "name": "regex-pipeline-viz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "正则 → NFA → DFA → 最小化 DFA 教学可视化流水线",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace backend",
+    "dev:web": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "start": "npm run start --workspace backend",
+    "test": "npm run test --workspace backend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
