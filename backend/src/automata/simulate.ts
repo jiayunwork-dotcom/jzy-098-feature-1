@@ -10,7 +10,13 @@
 import { epsilonClosure, nfaMove } from './subset';
 import type { DFA, DfaTrace, MinDFA, NFA, NfaTrace, SimulateResult, Symbol } from './types';
 
-export const MAX_INPUT_LENGTH = 200;
+/**
+ * 测试串长度上限。
+ * 取 500 而不是更小，是因为答案对拍给出的反例是乘积图上的最短路径，
+ * 组合状态上限 400 时反例最长可达 399 个码点——反例要能送进三机回放，
+ * 这里的上限必须容得下它。
+ */
+export const MAX_INPUT_LENGTH = 500;
 
 export function simulateNfa(nfa: NFA, input: string): NfaTrace {
   const chars = [...input];

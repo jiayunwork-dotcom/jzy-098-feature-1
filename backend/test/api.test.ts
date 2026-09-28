@@ -84,3 +84,157 @@ describe('POST /api/simulate：接口层面三机一致', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('POST /api/compare：单条答案对拍', () => {
+  it('等价正则：relation=equivalent，两个方向都无反例', async () => {
+    const res = await request(app).post('/api/compare').send({ left: '(a|b)*', right: '(a*b*)*' });
+    expect(res.status).toBe(200);
+    expect(res.body.relation).toBe('equivalent');
+    expect(res.body.leftOnly).toMatchObject({ exists: false, witness: null });
+    expect(res.body.rightOnly).toMatchObject({ exists: false, witness: null });
+    expect(res.body.alphabet).toEqual(['a', 'b']);
+    expect(res.body.steps[0].kind).toBe('init');
+    expect(res.body.steps.at(-1).kind).toBe('finish');
+  });
+
+  it('真包含：返回该方向反例', async () => {
+    const res = await request(app)
+      .post('/api/compare')
+      .send({ left: '(a|b)*abb', right: '(a|b)*bb' });
+    expect(res.status).toBe(200);
+    expect(res.body.relation).toBe('left_subset_right');
+    expect(res.body.rightOnly).toMatchObject({ exists: true, witness: 'bb' });
+  });
+
+  it('空串反例返回 witness="" 而不是 null', async () => {
+    const res = await request(app).post('/api/compare').send({ left: 'a+', right: 'a*' });
+    expect(res.status).toBe(200);
+    expect(res.body.rightOnly.witness).toBe('');
+    expect(res.body.rightOnly.length).toBe(0);
+    expect(res.body.rightOnly.exists).toBe(true);
+  });
+
+  it('字母表取并集：a* vs (a|b)* 反例 b，且两侧机器都显式补了死状态', async () => {
+    const res = await request(app).post('/api/compare').send({ left: 'a*', right: '(a|b)*' });
+    expect(res.status).toBe(200);
+    expect(res.body.rightOnly.witness).toBe('b');
+    // 左侧完整 DFA 的状态数 = 最小 DFA 2 个（含补出的死状态）
+    expect(res.body.left.dfa.states.length).toBe(2);
+    expect(res.body.left.dfa.transitions.length).toBe(
+      res.body.left.dfa.states.length * 2,
+    );
+  });
+
+  it('左边语法错：400 且带 side=left 与列号', async () => {
+    const res = await request(app).post('/api/compare').send({ left: '(a', right: 'a*' });
+    expect(res.status).toBe(400);
+    expect(res.body.side).toBe('left');
+    expect(res.body.position).toBe(0);
+  });
+
+  it('右边语法错：400 且带 side=right 与列号', async () => {
+    const res = await request(app)
+      .post('/api/compare')
+      .send({ left: 'a*', right: 'a|' });
+    expect(res.status).toBe(400);
+    expect(res.body.side).toBe('right');
+    expect(typeof res.body.position).toBe('number');
+  });
+
+  it('两边都语法错：优先报左边', async () => {
+    const res = await request(app).post('/api/compare').send({ left: '(', right: ')' });
+    expect(res.status).toBe(400);
+    expect(res.body.side).toBe('left');
+  });
+
+  it('缺少字段返回 400', async () => {
+    const res = await request(app).post('/api/compare').send({ left: 'a*' });
+    expect(res.status).toBe(400);
+  });
+
+  it('组合状态超上限返回 422', async () => {
+    const r19 = `(${ 'a'.repeat(19) })*`;
+    const r23 = `(${ 'a'.repeat(23) })*`;
+    const res = await request(app).post('/api/compare').send({ left: r19, right: r23 });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/组合状态/);
+  });
+});
+
+describe('POST /api/compare-batch：批量判定', () => {
+  it('一次返回多条结论，顺序与提交一致', async () => {
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: '(a|b)*', students: ['(a*b*)*', 'a*', 'c+'] });
+    expect(res.status).toBe(200);
+    expect(res.body.results).toHaveLength(3);
+    expect(res.body.results[0].relation).toBe('equivalent');
+    expect(res.body.results[1].relation).toBe('right_subset_left');
+    expect(res.body.results[2].ok).toBe(true);
+    expect(res.body.results.map((x: { index: number }) => x.index)).toEqual([0, 1, 2]);
+  });
+
+  it('单条语法错只拖累这一条', async () => {
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: 'a*', students: ['a+', '(', 'a?', '**'] });
+    expect(res.status).toBe(200);
+    expect(res.body.results[0].ok).toBe(true);
+    expect(res.body.results[1].ok).toBe(false);
+    expect(typeof res.body.results[1].error.position).toBe('number');
+    expect(res.body.results[2].ok).toBe(true);
+    expect(res.body.results[3].ok).toBe(false);
+  });
+
+  it('单条触发组合上限只在这一条上报 code=product_limit', async () => {
+    const r19 = `(${ 'a'.repeat(19) })*`;
+    const r23 = `(${ 'a'.repeat(23) })*`;
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: r19, students: ['a*', r23] });
+    expect(res.status).toBe(200);
+    expect(res.body.results[0].ok).toBe(true);
+    expect(res.body.results[1].ok).toBe(false);
+    expect(res.body.results[1].error.code).toBe('product_limit');
+  });
+
+  it('超过 30 条：整个请求 400', async () => {
+    const students = Array.from({ length: 31 }, () => 'a*');
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: 'a*', students });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/30/);
+  });
+
+  it('恰好 30 条：通过', async () => {
+    const students = Array.from({ length: 30 }, () => 'a*');
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: 'a*', students });
+    expect(res.status).toBe(200);
+    expect(res.body.results).toHaveLength(30);
+  });
+
+  it('标准答案语法错：整批 400 并带位置', async () => {
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: '(a', students: ['a*'] });
+    expect(res.status).toBe(400);
+    expect(res.body.position).toBe(0);
+  });
+
+  it('students 不是数组：400', async () => {
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: 'a*', students: 'a*' });
+    expect(res.status).toBe(400);
+  });
+
+  it('students 里有非字符串：400', async () => {
+    const res = await request(app)
+      .post('/api/compare-batch')
+      .send({ reference: 'a*', students: ['a*', 1] });
+    expect(res.status).toBe(400);
+  });
+});

@@ -27,11 +27,28 @@ export const ROW_BLOCK_GAP = 70;
 /** 每行最多放几个逻辑层，超过则折到下一行（长连接正则不至于横向无限延伸） */
 export const MAX_PER_ROW = 7;
 
+export interface LayoutOptions {
+  layerGap?: number;
+  rowGap?: number;
+  marginX?: number;
+  marginY?: number;
+  rowBlockGap?: number;
+  maxPerRow?: number;
+}
+
 export function layoutAutomaton(
   states: number[],
   edges: LayoutEdge[],
   start: number,
+  options: LayoutOptions = {},
 ): Map<number, Point> {
+  const layerGap = options.layerGap ?? LAYER_GAP;
+  const rowGap = options.rowGap ?? ROW_GAP;
+  const marginX = options.marginX ?? MARGIN_X;
+  const marginY = options.marginY ?? MARGIN_Y;
+  const rowBlockGap = options.rowBlockGap ?? ROW_BLOCK_GAP;
+  const maxPerRow = options.maxPerRow ?? MAX_PER_ROW;
+
   const adjacency = new Map<number, number[]>();
   for (const e of edges) {
     const list = adjacency.get(e.from);
@@ -60,8 +77,8 @@ export function layoutAutomaton(
   maxLevel = Math.max(...[...level.values()]);
 
   // 逻辑层 -> 物理（行、列）：每行从左到右，排满换行
-  const rowOf = (lvl: number) => Math.floor(lvl / MAX_PER_ROW);
-  const colOf = (lvl: number) => lvl % MAX_PER_ROW;
+  const rowOf = (lvl: number) => Math.floor(lvl / maxPerRow);
+  const colOf = (lvl: number) => lvl % maxPerRow;
 
   const cells = new Map<string, number[]>();
   for (const s of states) {
@@ -89,26 +106,30 @@ export function layoutAutomaton(
     members.sort((a, b) => a - b);
     const idx = members.indexOf(s);
     const tallest = rowTallest.get(row)!;
-    const offset = ((tallest - members.length) * ROW_GAP) / 2;
-    const rowBase = MARGIN_Y + row * (tallest * ROW_GAP + ROW_BLOCK_GAP);
+    const offset = ((tallest - members.length) * rowGap) / 2;
+    const rowBase = marginY + row * (tallest * rowGap + rowBlockGap);
     positions.set(s, {
-      x: MARGIN_X + col * LAYER_GAP,
-      y: rowBase + offset + idx * ROW_GAP,
+      x: marginX + col * layerGap,
+      y: rowBase + offset + idx * rowGap,
     });
   }
 
   return positions;
 }
 
-export function graphSize(positions: Map<number, Point>): {
+export function graphSize(
+  positions: Map<number, Point>,
+  marginX = MARGIN_X,
+  marginY = MARGIN_Y,
+): {
   width: number;
   height: number;
 } {
-  let width = MARGIN_X * 2;
-  let height = MARGIN_Y * 2;
+  let width = marginX * 2;
+  let height = marginY * 2;
   for (const p of positions.values()) {
-    width = Math.max(width, p.x + MARGIN_X);
-    height = Math.max(height, p.y + MARGIN_Y);
+    width = Math.max(width, p.x + marginX);
+    height = Math.max(height, p.y + marginY);
   }
   return { width, height };
 }

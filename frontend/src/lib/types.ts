@@ -152,4 +152,96 @@ export interface ExampleRegexDTO {
 export interface ApiErrorDTO {
   error: string;
   position?: number;
+  side?: 'left' | 'right';
+  code?: string;
+}
+
+// ---------------------------------------------------------------------------
+// 答案对拍
+// ---------------------------------------------------------------------------
+
+export type CompareRelationDTO =
+  | 'equivalent'
+  | 'left_subset_right'
+  | 'right_subset_left'
+  | 'incomparable';
+
+export interface CounterexampleDTO {
+  exists: boolean;
+  witness: string | null;
+  length: number;
+  productState: number | null;
+}
+
+export type ProductAcceptClassDTO = 'both' | 'left-only' | 'right-only' | 'neither';
+
+export interface ProductStateDTO {
+  id: number;
+  left: number;
+  right: number;
+  acceptClass: ProductAcceptClassDTO;
+  witness: string;
+}
+
+export type ProductStepKindDTO = 'init' | 'expand' | 'finish';
+
+export interface ProductStepDTO {
+  index: number;
+  kind: ProductStepKindDTO;
+  title: string;
+  description: string;
+  stateCount: number;
+  newTransition: number;
+  currentState: number | null;
+  symbol: Symbol | null;
+  newState: number | null;
+  targetState: number | null;
+  frontier: number[];
+}
+
+export interface CompareSideDTO {
+  regex: string;
+  ownAlphabet: Symbol[];
+  dfa: DfaDTO;
+  deadState: number;
+}
+
+export interface CompareResultDTO {
+  left: CompareSideDTO;
+  right: CompareSideDTO;
+  alphabet: Symbol[];
+  relation: CompareRelationDTO;
+  leftOnly: CounterexampleDTO;
+  rightOnly: CounterexampleDTO;
+  product: {
+    start: number;
+    states: ProductStateDTO[];
+    transitions: DfaTransitionDTO[];
+    accepting: {
+      both: number[];
+      leftOnly: number[];
+      rightOnly: number[];
+    };
+  };
+  steps: ProductStepDTO[];
+}
+
+export interface BatchCompareItemDTO {
+  index: number;
+  student: string;
+  ok: boolean;
+  error?: {
+    error: string;
+    position?: number;
+    code?: string;
+  };
+  relation?: CompareRelationDTO;
+  leftOnly?: CounterexampleDTO;
+  rightOnly?: CounterexampleDTO;
+}
+
+export interface BatchCompareResultDTO {
+  reference: string;
+  alphabet: Symbol[];
+  results: BatchCompareItemDTO[];
 }
